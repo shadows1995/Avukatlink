@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Lawyer {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  fullName       String
+  email          String   @unique
+  phone          String
+  barAssociation String
+  city           String
+  languages      Json     // array of strings
+  specialties    Json     // array of strings
+  rating         Float    @default(0)
+  photoUrl       String?
+  verified       Boolean  @default(false)
+  passwordHash   String
+  tasksCreated   Task[]   @relation("TasksCreated")
+  tasksAccepted  Task[]   @relation("TasksAccepted")
+  messagesSent   Message[]
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  title       String
+  description String
+  location    String
+  deadline    DateTime
+  offeredFee  Int
+  status      TaskStatus @default(PENDING)
+  city        String
+  creator     Lawyer     @relation("TasksCreated", fields: [creatorId], references: [id])
+  creatorId   String
+  acceptor    Lawyer?    @relation("TasksAccepted", fields: [acceptorId], references: [id])
+  acceptorId  String?
+  messages    Message[]
+}
+
+enum TaskStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id])
+  taskId    String
+  sender    Lawyer   @relation(fields: [senderId], references: [id])
+  senderId  String
+  content   String
+}
